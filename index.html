@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#070a12">
+  <title>Game Pass — Arcade</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="noise"></div>
+<main class="shell">
+  <header class="hero">
+    <div class="eyebrow"><span class="live-dot"></span> ARCADE // SESSION ACTIVE</div>
+    <h1>GAME <span>PASS</span></h1>
+    <p class="lead">Choisis ton épreuve. Un ticket gagnant peut se cacher derrière chaque jeu.</p>
+
+    <section class="ticket-panel">
+      <div class="ticket-copy">
+        <small>PASS ENCORE EN JEU</small>
+        <strong><span id="placesCounter">10</span><b>/10</b></strong>
+      </div>
+      <div class="ticket-lights" id="ticketLights" aria-label="Tickets disponibles"></div>
+    </section>
+  </header>
+
+  <section class="section-head">
+    <div>
+      <small>CHOISIS TON ÉPREUVE</small>
+      <h2>5 JEUX. UNE CHANCE.</h2>
+    </div>
+    <span class="status-pill">● DISPONIBLE</span>
+  </section>
+
+  <section class="games-grid">
+    <button class="game-card roulette" data-open-game="roulette">
+      <span class="number">01</span><span class="icon">🎡</span>
+      <span class="title">ROULETTE</span><span class="desc">Lance la roue du hasard.</span>
+      <span class="play">LANCER →</span>
+    </button>
+    <button class="game-card scratch" data-open-game="scratch">
+      <span class="number">02</span><span class="icon">🎫</span>
+      <span class="title">SCRATCH</span><span class="desc">Gratte pour révéler ton sort.</span>
+      <span class="play">GRATTER →</span>
+    </button>
+    <button class="game-card mystery" data-open-game="mystery">
+      <span class="number">03</span><span class="icon">🎁</span>
+      <span class="title">MYSTERY BOX</span><span class="desc">Un coffre. Un choix.</span>
+      <span class="play">CHOISIR →</span>
+    </button>
+    <button class="game-card safe" data-open-game="safe">
+      <span class="number">04</span><span class="icon">🔐</span>
+      <span class="title">COFFRE-FORT</span><span class="desc">Stoppe les rouleaux au bon moment.</span>
+      <span class="play">DÉVERROUILLER →</span>
+    </button>
+    <button class="game-card stop" data-open-game="stop">
+      <span class="number">05</span><span class="icon">⚡</span>
+      <span class="title">STOP ZONE</span><span class="desc">Vise la zone avant qu'il soit trop tard.</span>
+      <span class="play">DÉFIER →</span>
+    </button>
+    <div class="game-card locked">
+      <span class="number">06</span><span class="icon">◈</span>
+      <span class="title">CLASSIFIÉ</span><span class="desc">Prochaine épreuve à découvrir.</span>
+      <span class="play">🔒 VERROUILLÉ</span>
+    </div>
+  </section>
+
+  <section class="rules">
+    <span>01</span><p>Choisis un jeu</p><span>02</span><p>Relève l'épreuve</p><span>03</span><p>Découvre ton résultat</p>
+  </section>
+
+  <button id="resetDemoButton" class="reset">RESET DÉMO</button>
+</main>
+
+<div id="modalHost"></div>
+
+<section class="win-overlay" id="winOverlay" aria-hidden="true">
+  <div id="confetti" class="confetti"></div>
+  <div class="win-card">
+    <div class="win-tag">ACCESS GRANTED</div><div class="big-ticket">🎟️</div>
+    <h2>PASS DÉBLOQUÉ</h2><p>Félicitations, tu remportes une place.</p>
+    <strong id="ticketNumber">PLACE #01</strong>
+    <button id="closeWin" class="primary">CONTINUER</button>
+  </div>
+</section>
+
+<script src="js/app.js"></script>
+</body>
+</html>

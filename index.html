@@ -8,190 +8,130 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="top-line"></div>
+  <div class="topline"></div>
 
-  <main class="shell">
-    <header class="site-header">
-      <img src="assets/logo-cse-lmh.jpg" alt="CSE Lyon Métropole Habitat" class="official-logo">
+  <main class="page">
+    <header class="header">
+      <img src="assets/logo-cse-lmh.jpg" class="logo" alt="CSE Lyon Métropole Habitat">
     </header>
 
-    <section id="authScreen" class="screen">
-      <div class="auth-card">
-        <span class="eyebrow">ACCÈS PARTICIPANT</span>
-        <h1>LA ROUE <b>DU CSE</b></h1>
-        <p>
-          Entrez votre adresse e-mail autorisée pour recevoir un code de connexion à usage unique.
-        </p>
+    <section id="loginScreen" class="panel login-panel">
+      <span class="kicker">JEU CSE</span>
+      <h1>LA ROUE <em>DU CSE</em></h1>
+      <p class="intro">
+        Une seule chance par participant. Saisissez votre adresse professionnelle
+        <strong>@lmhabitat.fr</strong> pour accéder à la roue.
+      </p>
 
-        <form id="emailForm" class="auth-form">
-          <label for="emailInput">Adresse e-mail</label>
-          <input
-            id="emailInput"
-            type="email"
-            autocomplete="email"
-            placeholder="prenom.nom@exemple.fr"
-            required
-          >
-          <button class="primary-btn" type="submit">RECEVOIR MON CODE</button>
-        </form>
+      <form id="loginForm" class="login-form">
+        <label for="email">Adresse e-mail professionnelle</label>
+        <input
+          id="email"
+          type="email"
+          autocomplete="email"
+          placeholder="prenom.nom@lmhabitat.fr"
+          required
+        >
+        <button id="loginButton" class="main-btn" type="submit">
+          ACCÉDER À LA ROUE
+        </button>
+      </form>
 
-        <div id="otpBlock" class="otp-block hidden">
-          <p class="otp-info">
-            Code de démonstration envoyé. Pour la maquette, utilisez :
-          </p>
-          <div class="demo-code">123456</div>
+      <p id="loginMessage" class="message"></p>
 
-          <form id="otpForm" class="auth-form">
-            <label for="otpInput">Code à 6 chiffres</label>
-            <input
-              id="otpInput"
-              type="text"
-              inputmode="numeric"
-              maxlength="6"
-              pattern="[0-9]{6}"
-              placeholder="123456"
-              required
-            >
-            <button class="primary-btn" type="submit">SE CONNECTER</button>
-          </form>
-        </div>
-
-        <p id="authMessage" class="message"></p>
-
-        <div class="security-note">
-          <strong>MODE DÉMO</strong>
-          <span>
-            Aucun e-mail réel n'est envoyé. La version finale utilisera un backend sécurisé.
-          </span>
-        </div>
+      <div id="demoNotice" class="demo-notice hidden">
+        <strong>MODE DÉMO</strong>
+        <span>
+          Google Apps Script n'est pas encore activé. Les données restent uniquement sur ce navigateur.
+        </span>
       </div>
     </section>
 
-    <section id="gameScreen" class="screen hidden">
-      <div class="user-bar">
+    <section id="gameScreen" class="hidden">
+      <div class="sessionbar">
         <div>
-          <span>Connecté en tant que</span>
-          <strong id="userEmail"></strong>
+          <span>PARTICIPANT</span>
+          <strong id="participantEmail"></strong>
         </div>
-        <button id="logoutButton" type="button">SE DÉCONNECTER</button>
+        <div id="participationBadge" class="status-badge">1 CHANCE</div>
       </div>
 
       <section class="hero">
-        <span class="eyebrow">JEU CSE</span>
-        <h1>LA ROUE <b>DU CSE</b></h1>
-        <p>Tentez votre chance et remportez un lot loisirs. <strong>1 lot maximum par participant.</strong></p>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span>Tirages utilisés</span>
-            <strong id="drawCount">0 / 3</strong>
-          </div>
-          <div class="stat-card">
-            <span>Tirages restants</span>
-            <strong id="drawRemaining">3</strong>
-          </div>
-          <div class="stat-card">
-            <span>Places restantes</span>
-            <strong id="stockRemaining">74</strong>
-          </div>
-          <div class="stat-card">
-            <span>État du jeu</span>
-            <strong id="gameStatus">OUVERT</strong>
-          </div>
-        </div>
-
-        <div class="draw-dots" id="drawDots" aria-label="Progression des tirages">
-          <i></i><i></i><i></i>
-        </div>
+        <span class="kicker">TENTEZ VOTRE CHANCE</span>
+        <h1>LA ROUE <em>DU CSE</em></h1>
+        <p>
+          La flèche détermine exactement votre résultat.
+          <strong>Un seul tirage par adresse e-mail.</strong>
+        </p>
       </section>
 
-      <section class="wheel-section">
-        <div class="wheel-stage">
-          <div class="pointer"></div>
+      <section class="wheel-zone">
+        <div class="wheel-wrap">
+          <div class="pointer" aria-hidden="true"></div>
 
           <div id="wheel" class="wheel">
-            <span class="wheel-label l1">UGC</span>
-            <span class="wheel-label l2">PERDU</span>
-            <span class="wheel-label l3">CGR</span>
-            <span class="wheel-label l4">PATHÉ</span>
-            <span class="wheel-label l5">PERDU</span>
-            <span class="wheel-label l6">CALICEO</span>
-            <span class="wheel-label l7">EXALTO</span>
-            <span class="wheel-label l8">SURPRISE</span>
-
-            <div class="wheel-hub">
-              <span>CSE</span>
-              <small>LMH</small>
+            <canvas id="wheelCanvas" width="900" height="900"></canvas>
+            <div class="hub">
+              <strong>CSE</strong>
+              <span>LMH</span>
             </div>
           </div>
         </div>
 
-        <button id="spinButton" class="spin-button" type="button">
-          ▶ TOURNER LA ROUE
+        <button id="spinButton" class="spin-btn" type="button">
+          TOURNER LA ROUE
         </button>
 
-        <p id="spinMessage" class="spin-message">
-          Vous disposez de 3 tirages.
+        <p id="gameMessage" class="game-message">
+          Vous disposez d'un seul tirage.
         </p>
       </section>
 
-      <section class="prizes">
-        <span class="eyebrow">STOCK DÉMO</span>
-        <h2>LOTS EN JEU</h2>
-        <div id="prizeGrid" class="prize-grid"></div>
-      </section>
-
-      <section class="demo-tools">
-        <div>
-          <strong>OUTILS DE TEST</strong>
-          <span>Disponibles uniquement dans cette maquette.</span>
-        </div>
-        <div class="demo-buttons">
-          <button id="forceWinButton" type="button">FORCER UN GAIN</button>
-          <button id="resetUserButton" type="button">RESET MES 3 TIRAGES</button>
-          <button id="resetStockButton" type="button">RESET STOCK</button>
-        </div>
+      <section class="rule-box">
+        <strong>RÈGLE DU JEU</strong>
+        <p>
+          Une adresse <b>@lmhabitat.fr</b> = une participation.
+          Après le tirage, cette adresse ne pourra plus rejouer.
+        </p>
       </section>
     </section>
   </main>
 
-  <section id="resultOverlay" class="result-overlay" aria-hidden="true">
+  <section id="resultOverlay" class="overlay" aria-hidden="true">
     <div id="confetti" class="confetti"></div>
 
     <article class="result-card">
       <span id="resultBadge" class="result-badge">RÉSULTAT</span>
       <div id="resultIcon" class="result-icon">🎁</div>
+
       <h2 id="resultTitle"></h2>
       <p id="resultLead"></p>
 
-      <div id="ticketPanel" class="ticket-panel hidden">
-        <span>VOUS REMPORTEZ</span>
+      <div id="ticket" class="ticket hidden">
+        <span>VOTRE LOT</span>
         <strong id="ticketPrize"></strong>
         <small id="ticketValidity"></small>
 
-        <div class="ticket-id">
+        <div class="ticket-code">
           TICKET
-          <b id="ticketId"></b>
+          <b id="ticketCode"></b>
         </div>
       </div>
 
-      <p id="resultText"></p>
+      <p id="resultInfo"></p>
 
-      <button id="emailTicketButton" class="mail-button hidden" type="button">
-        ✉ ENVOYER MON TICKET
-      </button>
-
-      <button id="closeResultButton" class="secondary-btn" type="button">
-        CONTINUER
+      <button id="closeResult" class="secondary-btn" type="button">
+        FERMER
       </button>
     </article>
   </section>
 
   <footer>
     <strong>CSE Lyon Métropole Habitat</strong>
-    <span>Maquette V5</span>
+    <span>La Roue du CSE</span>
   </footer>
 
+  <script src="js/config.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

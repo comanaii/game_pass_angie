@@ -1,24 +1,548 @@
-const Game=(()=>{
-const TOTAL=10,KEY="gamepass_v3_remaining";let currentModal=null;
-const get=()=>{let v=localStorage.getItem(KEY);if(v===null){localStorage.setItem(KEY,TOTAL);return TOTAL}v=Number(v);return Number.isFinite(v)?Math.max(0,Math.min(TOTAL,v)):TOTAL};
-function update(){let n=get();document.getElementById("placesCounter").textContent=n;let h=document.getElementById("ticketLights");h.innerHTML="";for(let i=0;i<TOTAL;i++){let s=document.createElement("i");s.className="ticket-light"+(i<n?"":" off");h.appendChild(s)}}
-function outcome(p=.3){if(get()<=0)return{win:false,sold:true};return{win:Math.random()<p,sold:false}}
-function win(){let n=get();if(n<=0)return;let no=TOTAL-n+1;localStorage.setItem(KEY,n-1);update();document.getElementById("ticketNumber").textContent=`PLACE #${String(no).padStart(2,"0")}`;document.getElementById("winOverlay").classList.add("open");confetti()}
-function confetti(){let h=document.getElementById("confetti");h.innerHTML="";let c=["#4ce6ff","#ffd34e","#ff4f91","#54ee9a","#fff"];for(let i=0;i<65;i++){let e=document.createElement("i");e.className="piece";e.style.left=Math.random()*100+"%";e.style.background=c[i%c.length];e.style.animationDuration=2.3+Math.random()*2+"s";e.style.animationDelay=Math.random()*.6+"s";h.appendChild(e)}}
-const templates={
-roulette:`<h2>🎡 ROULETTE</h2><p>Lance la roue et laisse le hasard décider.</p><div class="wheel-wrap"><div class="pointer">▼</div><div class="wheel" id="wheel"><div class="wheel-center">GO</div></div></div><button class="primary" id="spin">FAIRE TOURNER</button><div class="result" id="res"></div>`,
-scratch:`<h2>🎫 SCRATCH</h2><p>Gratte au moins 45 % du ticket.</p><div class="scratch-card"><div class="scratch-message" id="sm"></div><canvas id="scratchCanvas" width="600" height="260"></canvas></div><button class="secondary" id="newScratch">NOUVEAU TICKET</button><div class="result" id="res"></div>`,
-mystery:`<h2>🎁 MYSTERY BOX</h2><p>Trois coffres. Un seul choix.</p><div class="boxes"><button class="box">🎁</button><button class="box">🎁</button><button class="box">🎁</button></div><button class="secondary" id="resetBoxes">REJOUER</button><div class="result" id="res"></div>`,
-safe:`<h2>🔐 COFFRE-FORT</h2><p>Les chiffres défilent. Stoppe les trois rouleaux.</p><div class="safe-display"><div class="digit">0</div><div class="digit">0</div><div class="digit">0</div></div><div class="safe-actions"><button class="digit-stop">STOP</button><button class="digit-stop">STOP</button><button class="digit-stop">STOP</button></div><button class="secondary" id="safeRestart">RELANCER</button><div class="result" id="res"></div>`,
-stop:`<h2>⚡ STOP ZONE</h2><p>La jauge accélère. Appuie dans la zone verte.</p><div class="meter"><div class="target-zone"></div><div class="meter-fill" id="meterFill"></div><div class="meter-marker" id="marker"></div></div><div class="meter-labels"><span>0</span><span>ZONE CIBLE</span><span>100</span></div><button class="primary" id="stopBtn">DÉMARRER</button><div class="result" id="res"></div>`
-};
-function open(name){let host=document.getElementById("modalHost");host.innerHTML=`<section class="modal"><div class="backdrop"></div><div class="modal-card"><button class="close">×</button>${templates[name]}</div></section>`;currentModal=name;host.querySelector(".close").onclick=close;host.querySelector(".backdrop").onclick=close;({roulette:initRoulette,scratch:initScratch,mystery:initMystery,safe:initSafe,stop:initStop})[name]()}
-function close(){document.getElementById("modalHost").innerHTML="";currentModal=null}
-function setRes(text,type=""){let r=document.getElementById("res");if(r){r.textContent=text;r.className="result "+type}}
-function initRoulette(){let w=document.getElementById("wheel"),b=document.getElementById("spin"),rot=0;b.onclick=()=>{b.disabled=true;setRes("Rotation en cours...");let o=outcome();rot+=1800+Math.floor(Math.random()*360);w.style.transform=`rotate(${rot}deg)`;setTimeout(()=>{if(o.sold)setRes("Tous les pass ont été remportés.","lose");else if(o.win){setRes("PASS DÉTECTÉ !","win");win()}else setRes("Pas cette fois.","lose");b.disabled=false},4050)}}
-function initScratch(){let c=document.getElementById("scratchCanvas"),x=c.getContext("2d"),drawing=false,revealed=false,o;function prep(){revealed=false;o=outcome();document.getElementById("sm").textContent=o.sold?"PLUS DE PASS":o.win?"🎟️ PASS TROUVÉ":"DOMMAGE";c.width=600;c.height=260;x.globalCompositeOperation="source-over";let g=x.createLinearGradient(0,0,600,260);g.addColorStop(0,"#8993a3");g.addColorStop(.5,"#e2e6eb");g.addColorStop(1,"#778292");x.fillStyle=g;x.fillRect(0,0,600,260);x.fillStyle="#374151";x.font="bold 34px system-ui";x.textAlign="center";x.fillText("GRATTE ICI",300,140);x.globalCompositeOperation="destination-out";setRes("")}function point(e){let r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*600/r.width,y:(e.clientY-r.top)*260/r.height}}function scratch(e){if(!drawing||revealed)return;let p=point(e);x.beginPath();x.arc(p.x,p.y,38,0,Math.PI*2);x.fill();let d=x.getImageData(0,0,600,260).data,t=0,s=0;for(let i=3;i<d.length;i+=96){s++;if(d[i]===0)t++}if(t/s>.45){revealed=true;x.clearRect(0,0,600,260);if(o.sold)setRes("Tous les pass ont été remportés.","lose");else if(o.win){setRes("Ticket gagnant !","win");setTimeout(win,300)}else setRes("Ticket perdant.","lose")}}c.onpointerdown=e=>{drawing=true;c.setPointerCapture(e.pointerId);scratch(e)};c.onpointermove=scratch;c.onpointerup=()=>drawing=false;document.getElementById("newScratch").onclick=prep;prep()}
-function initMystery(){let boxes=[...document.querySelectorAll(".box")],played=false;function reset(){played=false;setRes("");boxes.forEach(b=>{b.disabled=false;b.classList.remove("open");b.textContent="🎁"})}boxes.forEach(b=>b.onclick=()=>{if(played)return;played=true;let o=outcome();boxes.forEach(q=>q.disabled=true);b.classList.add("open");if(o.sold){b.textContent="⛔";setRes("Tous les pass ont été remportés.","lose")}else if(o.win){b.textContent="🎟️";setRes("PASS TROUVÉ !","win");setTimeout(win,300)}else{b.textContent="💨";setRes("Coffre vide.","lose")}});document.getElementById("resetBoxes").onclick=reset}
-function initSafe(){let ds=[...document.querySelectorAll(".digit")],bs=[...document.querySelectorAll(".digit-stop")],timers=[],stopped=0,o;function start(){timers.forEach(clearInterval);stopped=0;o=outcome();setRes("Synchronisation des rouleaux...");ds.forEach((d,i)=>{bs[i].disabled=false;timers[i]=setInterval(()=>d.textContent=Math.floor(Math.random()*10),75+i*18)});setTimeout(()=>setRes("STOPPE LES 3 ROULEAUX !"),500)}bs.forEach((b,i)=>b.onclick=()=>{clearInterval(timers[i]);b.disabled=true;stopped++;if(stopped===3){if(o.sold)setRes("Coffre vide : plus aucun pass.","lose");else if(o.win){ds.forEach(d=>d.textContent="7");setRes("777 — COFFRE OUVERT !","win");setTimeout(win,500)}else setRes("CODE REFUSÉ — retente ta chance.","lose")}});document.getElementById("safeRestart").onclick=start;start()}
-function initStop(){let b=document.getElementById("stopBtn"),f=document.getElementById("meterFill"),m=document.getElementById("marker"),running=false,val=0,timer=null,o;b.onclick=()=>{if(!running){o=outcome();running=true;val=0;b.textContent="STOP !";setRes("Vise la zone verte...");timer=setInterval(()=>{val+=.9+val*.008;f.style.width=Math.min(val,100)+"%";m.style.left=Math.min(val,100)+"%";if(val>=100)finish()},30)}else finish()};function finish(){if(!running)return;running=false;clearInterval(timer);b.textContent="RECOMMENCER";if(o.sold)setRes("Plus aucun pass disponible.","lose");else if(val>=68&&val<=80&&o.win){setRes(`PARFAIT — ${Math.round(val)}% !`,"win");setTimeout(win,350)}else if(val>=68&&val<=80)setRes(`Zone atteinte (${Math.round(val)}%), mais aucun pass cette fois.`,"lose");else setRes(`Raté : ${Math.round(val)}%. Vise la zone verte.`,"lose")}}
-function init(){update();document.querySelectorAll("[data-open-game]").forEach(b=>b.onclick=()=>open(b.dataset.openGame));document.getElementById("resetDemoButton").onclick=e=>{localStorage.setItem(KEY,TOTAL);update();e.target.textContent="✓ RÉINITIALISÉ";setTimeout(()=>e.target.textContent="RESET DÉMO",1200)};document.getElementById("closeWin").onclick=()=>document.getElementById("winOverlay").classList.remove("open");document.addEventListener("keydown",e=>{if(e.key==="Escape")close()})}
-return{init}})();document.addEventListener("DOMContentLoaded",Game.init);
+const CSEApp = (() => {
+  const MAX_DRAWS = 3;
+
+  const STOCK_KEY = "cse_v5_stock";
+  const SESSION_KEY = "cse_v5_session";
+  const FORCE_WIN_KEY = "cse_v5_force_win";
+
+  const INITIAL_PRIZES = [
+    { id:"exalto", name:"Exalto", validity:"Validité à préciser", initialStock:3, quantities:[1] },
+    { id:"cgr26", name:"CGR", validity:"Valable jusqu'au 26/12/2026", initialStock:6, quantities:[2,3] },
+    { id:"cgr27", name:"CGR", validity:"Valable jusqu'au 14/05/2027", initialStock:8, quantities:[2,3] },
+    { id:"pathe26", name:"Pathé", validity:"Valable jusqu'au 30/11/2026", initialStock:5, quantities:[2,3] },
+    { id:"pathe27", name:"Pathé", validity:"Valable jusqu'au 31/05/2027", initialStock:20, quantities:[2,3] },
+    { id:"ugc", name:"UGC", validity:"Valable jusqu'au 31/07/2027", initialStock:30, quantities:[2,3] },
+    { id:"caliceo", name:"Caliceo", validity:"Validité à préciser", initialStock:2, quantities:[2] }
+  ];
+
+  let stockState = null;
+  let session = null;
+  let pendingEmail = "";
+  let rotation = 0;
+  let spinning = false;
+  let lastTicket = null;
+
+  function freshStock() {
+    return {
+      sequence: 0,
+      closed: false,
+      prizes: INITIAL_PRIZES.map(p => ({
+        ...p,
+        stock: p.initialStock
+      }))
+    };
+  }
+
+  function loadStock() {
+    try {
+      stockState = JSON.parse(localStorage.getItem(STOCK_KEY));
+      if (!stockState || !Array.isArray(stockState.prizes)) throw new Error();
+    } catch {
+      stockState = freshStock();
+      saveStock();
+    }
+  }
+
+  function saveStock() {
+    localStorage.setItem(STOCK_KEY, JSON.stringify(stockState));
+  }
+
+  function loadSession() {
+    try {
+      session = JSON.parse(localStorage.getItem(SESSION_KEY));
+      if (!session || !session.email) session = null;
+    } catch {
+      session = null;
+    }
+  }
+
+  function saveSession() {
+    if (session) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } else {
+      localStorage.removeItem(SESSION_KEY);
+    }
+  }
+
+  function totalStock() {
+    return stockState.prizes.reduce((sum, p) => sum + p.stock, 0);
+  }
+
+  function drawsUsed() {
+    return session ? session.drawsUsed || 0 : 0;
+  }
+
+  function drawsRemaining() {
+    return Math.max(0, MAX_DRAWS - drawsUsed());
+  }
+
+  function gameClosedForUser() {
+    return !session ||
+      drawsUsed() >= MAX_DRAWS ||
+      stockState.closed ||
+      totalStock() <= 0;
+  }
+
+  function renderScreens() {
+    const auth = document.getElementById("authScreen");
+    const game = document.getElementById("gameScreen");
+
+    if (session) {
+      auth.classList.add("hidden");
+      game.classList.remove("hidden");
+      document.getElementById("userEmail").textContent = session.email;
+      renderGame();
+    } else {
+      auth.classList.remove("hidden");
+      game.classList.add("hidden");
+    }
+  }
+
+  function renderGame() {
+    const used = drawsUsed();
+    const remaining = drawsRemaining();
+    const stock = totalStock();
+
+    document.getElementById("drawCount").textContent = `${used} / ${MAX_DRAWS}`;
+    document.getElementById("drawRemaining").textContent = remaining;
+    document.getElementById("stockRemaining").textContent = stock;
+
+    const dots = [...document.querySelectorAll("#drawDots i")];
+    dots.forEach((dot, index) => {
+      dot.classList.toggle("used", index < used);
+    });
+
+    const closed = gameClosedForUser();
+    const status = document.getElementById("gameStatus");
+    const button = document.getElementById("spinButton");
+    const message = document.getElementById("spinMessage");
+
+    if (used >= MAX_DRAWS) {
+      status.textContent = "TERMINÉ";
+      message.textContent = "Vous avez utilisé vos 3 tirages. Merci pour votre participation.";
+    } else if (stock <= 0) {
+      status.textContent = "ÉPUISÉ";
+      message.textContent = "Tous les lots ont été remportés.";
+    } else if (stockState.closed) {
+      status.textContent = "FERMÉ";
+      message.textContent = "Le jeu est actuellement fermé.";
+    } else {
+      status.textContent = "OUVERT";
+
+      if (session && session.hasWon) {
+        message.textContent =
+          `Vous avez déjà remporté votre lot. Il vous reste ${remaining} tirage${remaining > 1 ? "s" : ""}, sans nouveau gain possible.`;
+      } else {
+        message.textContent =
+          `Il vous reste ${remaining} tirage${remaining > 1 ? "s" : ""}. 1 lot maximum par participant.`;
+      }
+    }
+
+    button.disabled = closed || spinning;
+
+    document.getElementById("prizeGrid").innerHTML =
+      stockState.prizes.map(p => `
+        <div class="prize-row">
+          <div>
+            <strong>${escapeHtml(p.name)}</strong>
+            <small>${escapeHtml(p.validity)}</small>
+          </div>
+          <div class="stock">
+            <b>${p.stock}</b>
+            <small>/ ${p.initialStock}</small>
+          </div>
+        </div>
+      `).join("");
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function requestOtp(event) {
+    event.preventDefault();
+
+    const input = document.getElementById("emailInput");
+    const email = input.value.trim().toLowerCase();
+    const message = document.getElementById("authMessage");
+
+    if (!email || !email.includes("@")) {
+      message.textContent = "Veuillez saisir une adresse e-mail valide.";
+      return;
+    }
+
+    pendingEmail = email;
+
+    // MAQUETTE :
+    // la version serveur répondra toujours avec un message générique
+    // afin d'éviter l'énumération des utilisateurs autorisés.
+    document.getElementById("otpBlock").classList.remove("hidden");
+    message.textContent = "Si cette adresse est autorisée, un code vient d'être envoyé.";
+  }
+
+  function verifyOtp(event) {
+    event.preventDefault();
+
+    const code = document.getElementById("otpInput").value.trim();
+    const message = document.getElementById("authMessage");
+
+    if (code !== "123456") {
+      message.textContent = "Code incorrect pour cette démonstration.";
+      return;
+    }
+
+    if (!pendingEmail) {
+      message.textContent = "Veuillez d'abord saisir votre adresse e-mail.";
+      return;
+    }
+
+    // Chaque e-mail possède sa propre progression locale dans la maquette.
+    const userKey = userStorageKey(pendingEmail);
+    let storedUser = null;
+
+    try {
+      storedUser = JSON.parse(localStorage.getItem(userKey));
+    } catch {}
+
+    session = storedUser || {
+      email: pendingEmail,
+      drawsUsed: 0,
+      hasWon: false
+    };
+
+    // Compatibilité avec les utilisateurs déjà créés dans la V5.
+    if (typeof session.hasWon !== "boolean") {
+      session.hasWon = false;
+    }
+
+    localStorage.setItem(userKey, JSON.stringify(session));
+    saveSession();
+
+    pendingEmail = "";
+    document.getElementById("otpInput").value = "";
+    message.textContent = "";
+
+    renderScreens();
+  }
+
+  function userStorageKey(email) {
+    return "cse_v5_user_" + btoa(unescape(encodeURIComponent(email))).replaceAll("=","");
+  }
+
+  function persistCurrentUser() {
+    if (!session) return;
+    localStorage.setItem(userStorageKey(session.email), JSON.stringify(session));
+    saveSession();
+  }
+
+  function logout() {
+    session = null;
+    saveSession();
+    renderScreens();
+  }
+
+  function availableOptions() {
+    return stockState.prizes
+      .map((prize, index) => ({
+        prize,
+        index,
+        quantities: prize.quantities.filter(q => q <= prize.stock)
+      }))
+      .filter(item => item.quantities.length > 0);
+  }
+
+  function decideOutcome() {
+    const options = availableOptions();
+
+    if (!options.length) return { type:"closed" };
+
+    const forced = localStorage.getItem(FORCE_WIN_KEY) === "1";
+    if (forced) localStorage.removeItem(FORCE_WIN_KEY);
+
+    // RÈGLE CSE :
+    // un participant peut effectuer jusqu'à 3 tirages,
+    // mais ne peut remporter qu'un seul lot au total.
+    if (session && session.hasWon) {
+      return { type:"lose", reason:"already_won" };
+    }
+
+    // Démo uniquement.
+    const win = forced || Math.random() < 0.32;
+    if (!win) return { type:"lose" };
+
+    const weighted = [];
+    options.forEach(item => {
+      for (let i = 0; i < item.prize.stock; i++) weighted.push(item);
+    });
+
+    const selected = weighted[Math.floor(Math.random() * weighted.length)];
+
+    let quantity;
+    if (selected.quantities.length === 1) {
+      quantity = selected.quantities[0];
+    } else {
+      quantity = Math.random() < 0.72
+        ? selected.quantities[0]
+        : selected.quantities[selected.quantities.length - 1];
+    }
+
+    return {
+      type:"win",
+      prizeIndex:selected.index,
+      quantity
+    };
+  }
+
+  function targetAngle(outcome) {
+    if (outcome.type === "lose") {
+      return Math.random() < .5 ? 67.5 : 202.5;
+    }
+
+    const prize = stockState.prizes[outcome.prizeIndex];
+
+    const map = {
+      ugc:22.5,
+      cgr26:112.5,
+      cgr27:112.5,
+      pathe26:157.5,
+      pathe27:157.5,
+      caliceo:247.5,
+      exalto:292.5
+    };
+
+    return map[prize.id] ?? 337.5;
+  }
+
+  function spin() {
+    if (spinning || gameClosedForUser()) return;
+
+    spinning = true;
+    renderGame();
+
+    const outcome = decideOutcome();
+    const target = targetAngle(outcome);
+
+    rotation += 2160 + (360 - target);
+    document.getElementById("wheel").style.transform = `rotate(${rotation}deg)`;
+
+    setTimeout(() => {
+      // Un clic valide toujours un tirage, gagné ou perdu.
+      session.drawsUsed += 1;
+      persistCurrentUser();
+
+      if (outcome.type === "win") {
+        const ticket = consumePrize(outcome);
+        if (ticket) {
+          showWin(ticket);
+        } else {
+          showLose();
+        }
+      } else if (outcome.type === "closed") {
+        showClosed();
+      } else {
+        showLose();
+      }
+
+      spinning = false;
+      renderGame();
+    }, 5100);
+  }
+
+  function consumePrize(outcome) {
+    const prize = stockState.prizes[outcome.prizeIndex];
+    if (!prize || prize.stock < outcome.quantity) return null;
+
+    prize.stock -= outcome.quantity;
+    stockState.sequence += 1;
+
+    if (totalStock() === 0) {
+      stockState.closed = true;
+    }
+
+    saveStock();
+
+    session.hasWon = true;
+    persistCurrentUser();
+
+    lastTicket = {
+      id:`CSE-2026-${String(stockState.sequence).padStart(4,"0")}`,
+      quantity:outcome.quantity,
+      name:prize.name,
+      validity:prize.validity,
+      email:session.email
+    };
+
+    return lastTicket;
+  }
+
+  function showWin(ticket) {
+    document.getElementById("resultBadge").textContent = "TICKET GAGNANT";
+    document.getElementById("resultIcon").textContent = "🎉";
+    document.getElementById("resultTitle").textContent = "FÉLICITATIONS !";
+    document.getElementById("resultLead").textContent =
+      "La roue du CSE vient de vous attribuer un lot.";
+
+    document.getElementById("ticketPrize").textContent =
+      `${ticket.quantity} ${ticket.quantity > 1 ? "PLACES" : "PLACE"} ${ticket.name.toUpperCase()}`;
+
+    document.getElementById("ticketValidity").textContent = ticket.validity;
+    document.getElementById("ticketId").textContent = ticket.id;
+
+    document.getElementById("ticketPanel").classList.remove("hidden");
+    document.getElementById("emailTicketButton").classList.remove("hidden");
+
+    document.getElementById("resultText").textContent =
+      `Tirages restants : ${drawsRemaining()}.`;
+
+    openOverlay();
+    createConfetti();
+  }
+
+  function showLose() {
+    document.getElementById("resultBadge").textContent = "RÉSULTAT";
+    document.getElementById("resultIcon").textContent = "🎬";
+    document.getElementById("resultTitle").textContent = "PAS CETTE FOIS";
+    document.getElementById("resultLead").textContent =
+      "La roue ne s'est pas arrêtée sur un lot gagnant.";
+
+    document.getElementById("ticketPanel").classList.add("hidden");
+    document.getElementById("emailTicketButton").classList.add("hidden");
+
+    document.getElementById("resultText").textContent =
+      drawsRemaining() > 0
+        ? `Il vous reste ${drawsRemaining()} tirage${drawsRemaining() > 1 ? "s" : ""}.`
+        : "Vous avez utilisé vos 3 tirages.";
+
+    openOverlay();
+  }
+
+  function showClosed() {
+    document.getElementById("resultBadge").textContent = "JEU TERMINÉ";
+    document.getElementById("resultIcon").textContent = "🏁";
+    document.getElementById("resultTitle").textContent = "PLUS AUCUN LOT";
+    document.getElementById("resultLead").textContent =
+      "Tous les lots ont déjà été remportés.";
+
+    document.getElementById("ticketPanel").classList.add("hidden");
+    document.getElementById("emailTicketButton").classList.add("hidden");
+    document.getElementById("resultText").textContent = "Merci pour votre participation.";
+
+    openOverlay();
+  }
+
+  function openOverlay() {
+    const overlay = document.getElementById("resultOverlay");
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden","false");
+  }
+
+  function closeOverlay() {
+    const overlay = document.getElementById("resultOverlay");
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden","true");
+    document.getElementById("confetti").innerHTML = "";
+  }
+
+  function createConfetti() {
+    const holder = document.getElementById("confetti");
+    holder.innerHTML = "";
+
+    const colors = ["#e71920","#ffffff","#ffb4b7","#ffd45b"];
+
+    for (let i = 0; i < 70; i++) {
+      const el = document.createElement("i");
+      el.className = "confetti-piece";
+      el.style.left = `${Math.random()*100}%`;
+      el.style.background = colors[i % colors.length];
+      el.style.animationDuration = `${2.2 + Math.random()*2}s`;
+      el.style.animationDelay = `${Math.random()*.6}s`;
+      holder.appendChild(el);
+    }
+  }
+
+  function demoEmailTicket() {
+    if (!lastTicket) return;
+
+    alert(
+      "MODE DÉMO\n\n" +
+      "Dans la version finale, le serveur enverra automatiquement ce ticket :\n\n" +
+      lastTicket.id + "\n" +
+      lastTicket.quantity + " place(s) " + lastTicket.name + "\n" +
+      lastTicket.validity + "\n\n" +
+      "Participant : " + lastTicket.email
+    );
+  }
+
+  function resetCurrentUser() {
+    if (!session) return;
+
+    session.drawsUsed = 0;
+    session.hasWon = false;
+    persistCurrentUser();
+    renderGame();
+
+    const btn = document.getElementById("resetUserButton");
+    btn.textContent = "✓ TIRAGES RÉINITIALISÉS";
+
+    setTimeout(() => {
+      btn.textContent = "RESET MES 3 TIRAGES";
+    }, 1400);
+  }
+
+  function resetStock() {
+    stockState = freshStock();
+    saveStock();
+    renderGame();
+
+    const btn = document.getElementById("resetStockButton");
+    btn.textContent = "✓ STOCK RÉINITIALISÉ";
+
+    setTimeout(() => {
+      btn.textContent = "RESET STOCK";
+    }, 1400);
+  }
+
+  function forceWin() {
+    const btn = document.getElementById("forceWinButton");
+
+    if (session && session.hasWon) {
+      btn.textContent = "DÉJÀ 1 LOT GAGNÉ";
+      setTimeout(() => {
+        btn.textContent = "FORCER UN GAIN";
+      }, 1400);
+      return;
+    }
+
+    localStorage.setItem(FORCE_WIN_KEY,"1");
+    btn.textContent = "✓ PROCHAIN TOUR GAGNANT";
+
+    setTimeout(() => {
+      btn.textContent = "FORCER UN GAIN";
+    }, 1400);
+  }
+
+  function init() {
+    loadStock();
+    loadSession();
+    renderScreens();
+
+    document.getElementById("emailForm").addEventListener("submit", requestOtp);
+    document.getElementById("otpForm").addEventListener("submit", verifyOtp);
+    document.getElementById("logoutButton").addEventListener("click", logout);
+    document.getElementById("spinButton").addEventListener("click", spin);
+    document.getElementById("closeResultButton").addEventListener("click", closeOverlay);
+    document.getElementById("emailTicketButton").addEventListener("click", demoEmailTicket);
+    document.getElementById("forceWinButton").addEventListener("click", forceWin);
+    document.getElementById("resetUserButton").addEventListener("click", resetCurrentUser);
+    document.getElementById("resetStockButton").addEventListener("click", resetStock);
+  }
+
+  return { init };
+})();
+
+document.addEventListener("DOMContentLoaded", CSEApp.init);

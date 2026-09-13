@@ -11,5 +11,5 @@
 */
 window.CSE_CONFIG = {
   DEMO_MODE: false,
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzCHXfbIN6fwgKihA7axkJ9iAtCwHIaoe_2KwoOFsXabL4V0AdWYyHk_K2lTxp9R8WH_Q/exec"
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycby5E7a3cPu_rrbyhX8sQzpkcSSB6xdHpvUTl-sRTehokKc1w7F_KasZxoeCeyo0XE9UBg/exec"
 };

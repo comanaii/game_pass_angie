@@ -19,7 +19,7 @@ const CONFIG = {
   DOMAIN: "lmhabitat.fr",
 
   // À MODIFIER :
-  ADMIN_EMAIL: "REMPLACER_PAR_ADRESSE_GMAIL@gmail.com",
+  ADMIN_EMAIL: "cse20262027@gmail.com",
 
   /*
     Nombre approximatif de personnes susceptibles de participer.
@@ -40,6 +40,7 @@ const CONFIG = {
 };
 
 const SHEETS = {
+  DASHBOARD: "TABLEAU_DE_BORD",
   PARTICIPANTS: "Participants",
   CONNECTIONS: "Connexions",
   PRIZES: "Lots"
@@ -47,6 +48,45 @@ const SHEETS = {
 
 function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  let dashboard = ss.getSheetByName(SHEETS.DASHBOARD);
+  if (!dashboard) dashboard = ss.insertSheet(SHEETS.DASHBOARD);
+
+  dashboard.clear();
+  dashboard.getRange("A1:D1").merge();
+  dashboard.getRange("A1").setValue("LA ROUE DU CSE — TABLEAU DE BORD");
+
+  dashboard.getRange("A3:B8").setValues([
+    ["INDICATEUR", "VALEUR"],
+    ["Participants connus", '=MAX(0,COUNTA(Participants!A:A)-1)'],
+    ["Participations effectuées", '=COUNTIF(Participants!D:D,TRUE)'],
+    ["Gagnants", '=COUNTIF(Participants!F:F,"GAGNÉ")'],
+    ["Perdants", '=COUNTIF(Participants!F:F,"PERDU")'],
+    ["Places restantes", '=SUM(Lots!E2:E)']
+  ]);
+
+  dashboard.getRange("A10:D10").setValues([["LOT","STOCK INITIAL","STOCK RESTANT","ÉTAT"]]);
+  dashboard.getRange("A11:A17").setValues([
+    ["Exalto"],["CGR 26/12/2026"],["CGR 14/05/2027"],
+    ["Pathé 30/11/2026"],["Pathé 31/05/2027"],
+    ["UGC 31/07/2027"],["Caliceo"]
+  ]);
+
+  for (let i = 0; i < 7; i++) {
+    const row = 11 + i;
+    const lotRow = 2 + i;
+    dashboard.getRange(row, 2).setFormula("=Lots!D" + lotRow);
+    dashboard.getRange(row, 3).setFormula("=Lots!E" + lotRow);
+    dashboard.getRange(row, 4).setFormula(
+      '=IF(C' + row + '<Lots!F' + lotRow + ',"ÉPUISÉ","DISPONIBLE")'
+    );
+  }
+
+  dashboard.setFrozenRows(1);
+  dashboard.getRange("A1:D1").setFontWeight("bold").setFontSize(16).setHorizontalAlignment("center");
+  dashboard.getRange("A3:B3").setFontWeight("bold");
+  dashboard.getRange("A10:D10").setFontWeight("bold");
+  dashboard.autoResizeColumns(1, 4);
 
   let participants = ss.getSheetByName(SHEETS.PARTICIPANTS);
   if (!participants) participants = ss.insertSheet(SHEETS.PARTICIPANTS);
@@ -105,7 +145,7 @@ function setup() {
   ]);
   prizes.setFrozenRows(1);
 
-  [participants, connections, prizes].forEach(sheet => {
+  [dashboard, participants, connections, prizes].forEach(sheet => {
     sheet.autoResizeColumns(1, sheet.getLastColumn());
   });
 

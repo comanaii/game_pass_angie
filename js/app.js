@@ -356,7 +356,7 @@
       const timeout = setTimeout(() => {
         cleanup();
         reject(new Error("Le service Google ne répond pas."));
-      }, 15000);
+      }, 30000);
 
       function cleanup() {
         clearTimeout(timeout);
